@@ -25,6 +25,8 @@ int main() {
     num = 5;
     tree1.insert(num);
     printNode(tree1.getRoot());
+    tree1.rotateLeft();
+    printNode(tree1.getRoot());
     num = 4;
     tree1.remove(num);
     printNode(tree1.getRoot());

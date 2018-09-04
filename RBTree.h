@@ -9,6 +9,7 @@ using std::cout;
 using std::endl;
 namespace structure{
     enum Location{leftNode, rightNode};
+    enum Color{black, red};
 
     template <class T>
     class Node{
@@ -19,6 +20,7 @@ namespace structure{
         Node<T>* right;
         T key;
         bool isRoot=false;
+        Color color;
 
         Node<T>* popNode();
         Node<T>* overrideWith(Node *newNode);
@@ -45,6 +47,8 @@ namespace structure{
         bool remove(T& key);
         bool remove();
         Node<T>* find(T& key);
+        bool rotateLeft();
+        bool rotateRight();
     };
 
     void printNode(Node<int>* node, int depth=0);
@@ -286,6 +290,50 @@ namespace structure{
             parent = parent->p;
         }
         return parent;
+    }
+
+    template <class T>
+    bool Node<T>::rotateLeft() {
+        if(right == nullptr)
+            return false;
+        Node* x = this;
+        Node* y = this->right;
+        x->right = y->left;
+        if(y->left != nullptr)
+            y->left->p = x;
+        y->p = x->p;
+        if(x->p == nullptr){
+            y->isRoot = true;
+            x->isRoot = false;
+        } else if (x == x->p->left){
+            x->p->left = y;
+        } else{
+            x->p->right = y;
+        }
+        y->left = x;
+        x->p = y;
+    }
+
+    template <class T>
+    bool Node<T>::rotateRight() {
+        if(left == nullptr)
+            return false;
+        Node* x = this;
+        Node* y = this->left;
+        y->left = x->right;
+        if(x->right != nullptr)
+            x->right->p = y;
+        x->p = y->p;
+        if(y->p == nullptr){
+            x->isRoot = true;
+            y->isRoot = false;
+        } else if (y == y->p->left){
+            y->p->left = x;
+        } else{
+            y->p->right = x;
+        }
+        x->left = y;
+        y->p = x;
     }
 
 

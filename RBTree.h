@@ -9,9 +9,6 @@ using std::cout;
 using std::endl;
 namespace structure{
     enum Location{leftNode, rightNode};
-    std::random_device rd;
-    std::default_random_engine generator(rd());
-    std::uniform_int_distribution<int> distribution(0,1);
 
     template <class T>
     class Node{
@@ -21,13 +18,17 @@ namespace structure{
         Node<T>* left;
         Node<T>* right;
         T key;
+        bool isRoot=false;
 
         Node<T>* popNode();
         Node<T>* overrideWith(Node *newNode);
+        static std::random_device rd;
+        static std::default_random_engine generator;
+        static std::uniform_int_distribution<int> distribution;
         explicit  Node(T& key,
                        Node* p,
                        Node* left = nullptr,
-                       Node* right = nullptr): p(p);
+                       Node* right = nullptr);
     public:
         explicit  Node(T& key);
         ~Node();
@@ -46,6 +47,8 @@ namespace structure{
         Node<T>* find(T& key);
     };
 
+    void printNode(Node<int>* node, int depth=0);
+
     template <class T>
     Node<T>::Node(T& key,
                   Node* p,
@@ -56,34 +59,7 @@ namespace structure{
                                right(right){};
 
     template <class T>
-    Node<T>::Node(T& key):Node(key, nullptr){};
-
-    template <class T>
-    Node<T>* Node<T>::popNode() {
-        Node* sibling;
-        if(left == nullptr)
-            sibling = right;
-        else if(right == nullptr)
-            sibling = left;
-        else
-            return nullptr;
-
-        if (p != nullptr) {
-            if (p->left == this)
-                p->left = sibling;
-            else
-                p->right = sibling;
-        }
-
-        if (sibling != nullptr)
-            sibling->p = p;
-
-        p = nullptr;
-        left = nullptr;
-        right = nullptr;
-        return this;
-
-    }
+    Node<T>::Node(T& key):Node(key, nullptr){isRoot=true;};
 
     template <class T>
     Node<T>::~Node() {
@@ -97,11 +73,71 @@ namespace structure{
                 p->right= nullptr;
         }
     }
+    template <class T>
+    std::random_device Node<T>::rd;
+
+    template <class T>
+    std::default_random_engine Node<T>::generator(Node<T>::rd());
+
+    template <class T>
+    std::uniform_int_distribution<int> Node<T>::distribution(0,1);
+
+    template <class T>
+    Node<T>* Node<T>::popNode() {
+        Node* sibling;
+        if(left == nullptr)
+            sibling = right;
+        else if(right == nullptr)
+            sibling = left;
+        else
+            return nullptr;
+
+        if(!isRoot) {
+            if (p != nullptr) {
+                if (p->left == this)
+                    p->left = sibling;
+                else
+                    p->right = sibling;
+            }
+
+            if (sibling != nullptr)
+                sibling->p = p;
+
+            p = nullptr;
+            left = nullptr;
+            right = nullptr;
+            return this;
+        } else{
+            if(sibling==right){
+                T old_key(key);
+                key = right->key;
+                right->key = old_key;
+                left = right->left;
+                right->left = nullptr;
+                return right->popNode();
+            }else{
+                T old_key(key);
+                key = left->key;
+                left->key = old_key;
+                right = left->right;
+                left->right = nullptr;
+                return left->popNode();
+            }
+        }
+
+    }
 
     template <class T>
     Node<T> * Node<T>::overrideWith(Node *newNode){
         if(newNode == nullptr)
             return nullptr;
+        if(isRoot){
+            key=newNode->key;
+            newNode->p= nullptr;
+            newNode->left= nullptr;
+            newNode->right= nullptr;
+            return newNode;
+        }
         newNode->left = left;
         newNode->right = right;
         newNode->p = p;
@@ -265,7 +301,6 @@ namespace structure{
             cout << "--------------------" << endl;
     }
 
-    template class Node<int>;
 }
 
 

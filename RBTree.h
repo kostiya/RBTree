@@ -13,13 +13,12 @@ namespace structure{
 
     template <class T>
     class Node{
-        friend class BinaryTree;
+        template <class R>friend class RBTree;
     protected:
         Node<T>* p;
         Node<T>* left;
         Node<T>* right;
         T key;
-        bool isRoot=false;
         Color color;
 
         Node<T>* popNode();
@@ -30,7 +29,8 @@ namespace structure{
         explicit  Node(T& key,
                        Node* p,
                        Node* left = nullptr,
-                       Node* right = nullptr);
+                       Node* right = nullptr,
+                       Color color=red);
     public:
         explicit  Node(T& key);
         ~Node();
@@ -43,7 +43,7 @@ namespace structure{
         Node<T>* successor();
         Node<T>* predecessor();
         Node<T>* getRoot();
-        Node<T>* insert(T& key);
+        //Node<T>* insert(T& key);
         bool remove(T& key);
         bool remove();
         Node<T>* find(T& key);
@@ -51,19 +51,43 @@ namespace structure{
         bool rotateRight();
     };
 
+
+    template <class T>
+    class RBTree{
+    protected:
+        Node<T>* root;
+    public:
+        explicit RBTree(T& key){
+            root = new Node<T>(key);
+        };
+        RBTree(){
+            root = nullptr;
+        };
+        Node<T>* getRoot(){
+            return root;
+        }
+        ~RBTree(){
+            delete root;
+        }
+        Node<T>* insert(T& key);
+    };
+
+
     void printNode(Node<int>* node, int depth=0);
 
     template <class T>
     Node<T>::Node(T& key,
                   Node* p,
                   Node* left,
-                  Node* right):key(key),
+                  Node* right,
+                  Color color):key(key),
                                p(p),
                                left(left),
-                               right(right){};
+                               right(right),
+                               color(color){};
 
     template <class T>
-    Node<T>::Node(T& key):Node(key, nullptr){isRoot=true;};
+    Node<T>::Node(T& key):Node(key, nullptr){};
 
     template <class T>
     Node<T>::~Node() {
@@ -96,7 +120,7 @@ namespace structure{
         else
             return nullptr;
 
-        if(!isRoot) {
+        if(!p) {
             if (p != nullptr) {
                 if (p->left == this)
                     p->left = sibling;
@@ -135,7 +159,7 @@ namespace structure{
     Node<T> * Node<T>::overrideWith(Node *newNode){
         if(newNode == nullptr)
             return nullptr;
-        if(isRoot){
+        if(p){
             key=newNode->key;
             newNode->p= nullptr;
             newNode->left= nullptr;
@@ -186,9 +210,13 @@ namespace structure{
         return this->key;
     }
     template <class T>
-    Node<T>* Node<T>::insert(T& key){
-        Node* current_node = this->getRoot();
-        Node* previous_node = current_node;
+    Node<T>* RBTree<T>::insert(T& key){
+        Node<T>* current_node = this->getRoot();
+        Node<T>* previous_node = nullptr;
+        if(current_node == nullptr){
+            root = new Node<T>(key, nullptr);
+            return root;
+        }
         Location side = rightNode;
         while (current_node != nullptr){
             if(key==current_node->key)
@@ -204,10 +232,10 @@ namespace structure{
             }
         }
         if(side == rightNode){
-            previous_node->right = new Node(key,previous_node);
+            previous_node->right = new Node<T>(key,previous_node);
             return previous_node->right;
         } else{
-            previous_node->left = new Node(key,previous_node);
+            previous_node->left = new Node<T>(key,previous_node);
             return previous_node->left;
         }
     }

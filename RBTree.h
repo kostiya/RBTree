@@ -318,8 +318,8 @@ namespace structure{
     bool Node<T>::rotateRight() {
         if(left == nullptr)
             return false;
-        Node* x = this;
-        Node* y = this->left;
+        Node* y = this;
+        Node* x = this->left;
         y->left = x->right;
         if(x->right != nullptr)
             x->right->p = y;
@@ -332,7 +332,7 @@ namespace structure{
         } else{
             y->p->right = x;
         }
-        x->left = y;
+        x->right  = y;
         y->p = x;
     }
 

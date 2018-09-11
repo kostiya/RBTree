@@ -19,10 +19,8 @@ namespace structure{
         Node<T>* left;
         Node<T>* right;
         T key;
-        Color color;
+        Color color=red;
 
-        Node<T>* popNode();
-        Node<T>* overrideWith(Node *newNode);
         static std::random_device rd;
         static std::default_random_engine generator;
         static std::uniform_int_distribution<int> distribution;
@@ -38,17 +36,20 @@ namespace structure{
         Node<T>* getLeft() const;
         Node<T>* getRight() const;
         const T& getKey() const;
+        Color getColor() const{
+            return color;
+        }
         Node<T>* minimum();
         Node<T>* maximum();
         Node<T>* successor();
         Node<T>* predecessor();
         Node<T>* getRoot();
         //Node<T>* insert(T& key);
-        bool remove(T& key);
-        bool remove();
+        //bool remove(T& key);
+        //bool remove();
         Node<T>* find(T& key);
-        bool rotateLeft();
-        bool rotateRight();
+        //bool rotateLeft();
+        //bool rotateRight();
     };
 
 
@@ -56,9 +57,11 @@ namespace structure{
     class RBTree{
     protected:
         Node<T>* root;
+        void RBInsertFixup(Node<T>* z);
     public:
         explicit RBTree(T& key){
             root = new Node<T>(key);
+            root->color = black;
         };
         RBTree(){
             root = nullptr;
@@ -67,9 +70,17 @@ namespace structure{
             return root;
         }
         ~RBTree(){
-            delete root;
+            if(root)
+                delete root;
         }
         Node<T>* insert(T& key);
+        Node<T>* transplant(Node<T>* u, Node<T>* v);
+        bool remove(T& key);
+        Node<T>* find(T& key){
+            root->find(key);
+        }
+        bool rotateLeft(Node<T>* x);
+        bool rotateRight(Node<T>* y);
     };
 
 
@@ -110,81 +121,7 @@ namespace structure{
     template <class T>
     std::uniform_int_distribution<int> Node<T>::distribution(0,1);
 
-    template <class T>
-    Node<T>* Node<T>::popNode() {
-        Node* sibling;
-        if(left == nullptr)
-            sibling = right;
-        else if(right == nullptr)
-            sibling = left;
-        else
-            return nullptr;
 
-        if(!p) {
-            if (p != nullptr) {
-                if (p->left == this)
-                    p->left = sibling;
-                else
-                    p->right = sibling;
-            }
-
-            if (sibling != nullptr)
-                sibling->p = p;
-
-            p = nullptr;
-            left = nullptr;
-            right = nullptr;
-            return this;
-        } else{
-            if(sibling==right){
-                T old_key(key);
-                key = right->key;
-                right->key = old_key;
-                left = right->left;
-                right->left = nullptr;
-                return right->popNode();
-            }else{
-                T old_key(key);
-                key = left->key;
-                left->key = old_key;
-                right = left->right;
-                left->right = nullptr;
-                return left->popNode();
-            }
-        }
-
-    }
-
-    template <class T>
-    Node<T> * Node<T>::overrideWith(Node *newNode){
-        if(newNode == nullptr)
-            return nullptr;
-        if(p){
-            key=newNode->key;
-            newNode->p= nullptr;
-            newNode->left= nullptr;
-            newNode->right= nullptr;
-            return newNode;
-        }
-        newNode->left = left;
-        newNode->right = right;
-        newNode->p = p;
-        if(p != nullptr) {
-            if (p->left == this)
-                p->left = newNode;
-            else
-                p->right = newNode;
-        }
-        if(right != nullptr)
-            right->p = newNode;
-        if(left != nullptr)
-            left->p = newNode;
-
-        p= nullptr;
-        left= nullptr;
-        right= nullptr;
-        return this;
-    }
 
     template <class T>
     Node<T>* Node<T>::getRoot(){
@@ -214,7 +151,7 @@ namespace structure{
         Node<T>* current_node = this->getRoot();
         Node<T>* previous_node = nullptr;
         if(current_node == nullptr){
-            root = new Node<T>(key, nullptr);
+            root = new Node<T>(key, nullptr, nullptr, nullptr,black);
             return root;
         }
         Location side = rightNode;
@@ -233,38 +170,78 @@ namespace structure{
         }
         if(side == rightNode){
             previous_node->right = new Node<T>(key,previous_node);
+            RBInsertFixup(previous_node->right);
             return previous_node->right;
         } else{
             previous_node->left = new Node<T>(key,previous_node);
+            RBInsertFixup(previous_node->left);
             return previous_node->left;
         }
     }
-    template <class T>
-    bool Node<T>::remove() {
 
-        if(left== nullptr || right == nullptr){
-            delete popNode();
-            return true;
+    template <class T>
+    void RBTree<T>::RBInsertFixup(Node<T>* z){
+        while (z->p->color == red) {
+            if (z->p == z->p->p->left) {
+                Node<T> *y = z->p->p->right;
+                if (y && y->color == red) {
+                    z->p->color = black;
+                    y->color = black;
+                    z->p->p->color = red;
+                    z = z->p->p;
+                } else {
+                    if (z == z->p->right) {
+                        z = z->p;
+                        rotateLeft(z);
+                    }
+                    z->p->color = black;
+                    z->p->p->color = red;
+                    rotateRight(z->p->p);
+                }
+            } else {
+                Node<T> *y = z->p->p->left;
+                if (y && y->color == red) {
+                    z->p->color = black;
+                    y->color = black;
+                    z->p->p->color = red;
+                    z = z->p->p;
+                } else {
+                    if (z == z->p->left) {
+                        z = z->p;
+                        rotateRight(z);
+                    }
+                    z->p->color = black;
+                    z->p->p->color = red;
+                    rotateLeft(z->p->p);
+                }
+            }
         }
-
-        Node* newNode;
-
-        if(distribution(generator)==0)
-            newNode = left->maximum();
-        else
-            newNode = right->minimum();
-
-        newNode = newNode->popNode();
-        delete overrideWith(newNode);
-        return true;
-
+        root->color = black;
     }
 
     template <class T>
-    bool Node<T>::remove(T& key){
-        Node* node = find(key);
-        return node->remove();
+    Node<T>* RBTree<T>::transplant(Node<T> *u, Node<T> *v) {
+        if(u==root)
+            root = v;
+        else if (u == u->p->left)
+            u->p->left = v;
+        else u->p->right = v;
+
+        v->p = u->p;
+        u->p= nullptr;
+        u->right = nullptr;
+        u->left = nullptr;
     }
+
+    template <class T>
+    bool RBTree<T>::remove(T& key) {
+
+        Node<T>* z = find(key);
+        if(!z)
+            return false;
+
+    }
+
 
     template <class T>
     Node<T>* Node<T>::find(T& key){
@@ -321,18 +298,16 @@ namespace structure{
     }
 
     template <class T>
-    bool Node<T>::rotateLeft() {
-        if(right == nullptr)
+    bool RBTree<T>::rotateLeft(Node<T>* x) {
+        if(x->right == nullptr)
             return false;
-        Node* x = this;
-        Node* y = this->right;
+        Node<T>* y = x->right;
         x->right = y->left;
         if(y->left != nullptr)
             y->left->p = x;
         y->p = x->p;
         if(x->p == nullptr){
-            y->isRoot = true;
-            x->isRoot = false;
+            root = y;
         } else if (x == x->p->left){
             x->p->left = y;
         } else{
@@ -343,18 +318,16 @@ namespace structure{
     }
 
     template <class T>
-    bool Node<T>::rotateRight() {
-        if(left == nullptr)
+    bool RBTree<T>::rotateRight(Node<T>* y) {
+        if(y->left == nullptr)
             return false;
-        Node* y = this;
-        Node* x = this->left;
+        Node<T>* x = y->left;
         y->left = x->right;
         if(x->right != nullptr)
             x->right->p = y;
         x->p = y->p;
         if(y->p == nullptr){
-            x->isRoot = true;
-            y->isRoot = false;
+            x=root;
         } else if (y == y->p->left){
             y->p->left = x;
         } else{
@@ -371,7 +344,7 @@ namespace structure{
         printNode(node->getLeft() ,depth+1);
         for(int i = 0; i < depth*4;i++)
             cout << " ";
-        cout << node->getKey() << endl;
+        cout << node->getKey() << (node->getColor() ? " Red":" Black") << endl;
         printNode(node->getRight(),depth+1);
         if(depth==0)
             cout << "--------------------" << endl;

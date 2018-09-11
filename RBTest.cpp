@@ -10,7 +10,7 @@ using structure::printNode;
 int main() {
     int num;
     num = 4;
-    Node<int> tree1(num);
+    structure::RBTree <int> tree1(num);
     tree1.insert(num);
     num = 6;
     tree1.insert(num);
@@ -25,7 +25,7 @@ int main() {
     num = 5;
     tree1.insert(num);
     printNode(tree1.getRoot());
-    tree1.rotateLeft();
+    /*tree1.getRoot().rotateLeft();
     printNode(tree1.getRoot());
     num = 4;
     tree1.remove(num);
@@ -41,6 +41,6 @@ int main() {
         cout << node->getKey() << " ";
         node = node->successor();
     }
-    cout << endl;
+    cout << endl;*/
     return 0;
 }
